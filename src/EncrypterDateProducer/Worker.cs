@@ -1,6 +1,8 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Options;
 using Shared.Models;
+using System.Text.Json;
+//using Shared.Models;
 
 namespace EncrypterDateProducer
 {
@@ -19,7 +21,6 @@ namespace EncrypterDateProducer
             var config = new ProducerConfig
             {
                 BootstrapServers = _kafkaSettings.BootstrapServers,
-
             };
 
             using (var producer = new ProducerBuilder<Null, string>(config).Build())
@@ -28,9 +29,11 @@ namespace EncrypterDateProducer
                 {
                     try
                     {
-                        var message = new Message<Null, string> { Value = SHA268generator.CurrentTimeToSha256() };
+                        var currentTimeSerialized = SHA268generator.CurrentTimeToSha256();
+                        //MessageDTO jsonSHA265Deserialized = JsonSerializer.Deserialize<MessageDTO>(currentTimeSerialized);
+                        var message = new Message<Null, string> { Value = currentTimeSerialized };
                         await producer.ProduceAsync(_kafkaSettings.Topic, message, stoppingToken);/*_kafkaSettings.Topic*/
-                        _logger.LogInformation("Mensaje enviado a Kafka-Redpanda a las {time}", DateTime.UtcNow);
+                        _logger.LogInformation("Mensaje enviado a Kafka-Redpanda a las {time}", currentTimeSerialized);
                     }
                     catch (Exception ex)
                     {

@@ -1,23 +1,51 @@
+using Confluent.Kafka;
+using Microsoft.Extensions.Options;
+using Shared.Models;
+using System.Text.Json;
+
 namespace DecrypterDateConsumer
 {
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
+        private readonly KafkaSettings _kafkaSettings;
 
-        public Worker(ILogger<Worker> logger)
+
+        public Worker(ILogger<Worker> logger, IOptions<KafkaSettings> kafkaSettings)
         {
             _logger = logger;
+            _kafkaSettings = kafkaSettings.Value;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            var config = new ConsumerConfig
             {
-                if (_logger.IsEnabled(LogLevel.Information))
+                BootstrapServers = _kafkaSettings.BootstrapServers,
+                GroupId = _kafkaSettings.GroupId,
+            };
+
+            string kafkaTopic = _kafkaSettings.Topic;
+
+            using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
+            {
+                consumer.Subscribe(kafkaTopic);
+
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                    try
+                    {
+                        var consumeResult = consumer.Consume(stoppingToken);
+                        //MessageDTO jsonSHA265Deserialized = JsonSerializer.Deserialize<MessageDTO>(consumeResult.Message.Value);
+
+                        _logger.LogInformation($"Mensaje recibido: {consumeResult.Message.Value} a las {DateTime.UtcNow}");
+                    }
+                    catch (ConsumeException ex)
+                    {
+                        _logger.LogError(ex, "Error consumiendo mensaje de Kafka");
+                    }
+                    await Task.Delay(1000, stoppingToken);
                 }
-                await Task.Delay(1000, stoppingToken);
             }
         }
     }
