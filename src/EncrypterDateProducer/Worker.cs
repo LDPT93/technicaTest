@@ -1,43 +1,46 @@
 using Confluent.Kafka;
+using Microsoft.Extensions.Options;
+using Shared.Models;
 
 namespace EncrypterDateProducer
 {
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly ProducerConfig confi;
-        public Worker(ILogger<Worker> logger)
+        private readonly KafkaSettings _kafkaSettings;
+        public Worker(ILogger<Worker> logger, IOptions<KafkaSettings> kafkaSettings)
         {
             _logger = logger;
-            confi = new ProducerConfig { BootstrapServers = "localhost:19092" };
-
+            _kafkaSettings = kafkaSettings.Value;
         }
-        ClassSHA268generator _classSHA268Generator = new ClassSHA268generator();
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            using (var producer = new ProducerBuilder<Null, string>(confi).Build())
+            var config = new ProducerConfig
+            {
+                BootstrapServers = _kafkaSettings.BootstrapServers,
+
+            };
+
+            using (var producer = new ProducerBuilder<Null, string>(config).Build())
             {
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    //if (_logger.IsEnabled(LogLevel.Information))/*preguntar*/
-                    //{
                     try
                     {
-                        var message = new Message<Null, string> { Value = _classSHA268Generator.CurrentTimeToSha256() };
-                        await producer.ProduceAsync("chat-room", message, stoppingToken);
-                        _logger.LogInformation("Mensaje enviado a Kafka-Redpanda a las {time}", DateTime.Now);
+                        var message = new Message<Null, string> { Value = SHA268generator.CurrentTimeToSha256() };
+                        await producer.ProduceAsync(_kafkaSettings.Topic, message, stoppingToken);/*_kafkaSettings.Topic*/
+                        _logger.LogInformation("Mensaje enviado a Kafka-Redpanda a las {time}", DateTime.UtcNow);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error enviando mensaje a Kafka-Redpanda");
                     }
-
-                    //_logger.LogInformation("Worker running at: {time}", DateTime.Now);
-                    //}
                     await Task.Delay(1000, stoppingToken);
                 }
             }
         }
+
     }
 }
+
