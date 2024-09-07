@@ -1,66 +1,75 @@
 ﻿using ConditionalAPIClient;
-using System.ComponentModel;
 using System.Configuration;
-using System.Net;
-using System.Text.Json;
-using System.Xml.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Drawing;
+using System;
 public class Program
 {
-    private static void Main(string[] args)
+    static async Task Main(string[] args)
     {
+        var _endpointsContainer = new EndpointsContainer<string>();
+
         var appSettings = ConfigurationManager.AppSettings;
-        int id = 1;
+        int _endpointid = 1;
         foreach (var key in appSettings.AllKeys)
         {
             if (key.Contains("Endpoint"))
             {
-                EndpintContainer.Endpints.Add(new Endpint { Id = id++, Endpoint = appSettings[key] });
+                var newEndpoint = new Endpoint<string>(_endpointid, appSettings[key]);
+                _endpointsContainer.AddEndpoint(newEndpoint);
             }
+            _endpointid++;
         }
-        if (EndpintContainer.Endpints.Count.Equals(0))
+        if (EndpointsContainer<string>.Endpoints.Count.Equals(0))
         {
-            Console.WriteLine("No hay endpoints configurados");
+            Console.WriteLine("There are no endpoints configured");
         }
         else
         {
-            Console.WriteLine("Lista de endpoint disponibles:");
+            Console.WriteLine("List of available endpoints:");
 
-            for (int i = 0; i < EndpintContainer.Endpints.Count; i++)
+            for (int i = 0; i < EndpointsContainer<string>.Endpoints.Count; i++)
             {
-                Console.WriteLine("ID: " + EndpintContainer.Endpints[i].Id + "   ---->   Endpint: " + EndpintContainer.Endpints[i].Endpoint);
+                Console.WriteLine("ID: " + EndpointsContainer<string>.Endpoints[i].Id + "   ---->   Endpint: " + EndpointsContainer<string>.Endpoints[i].Value);
             }
             Console.WriteLine("\n");
 
             bool incorrectID = true;
             while (incorrectID)
             {
-                Console.WriteLine("Por favor, introduce el id del endpoint que quiere utilizar:");
+                Console.WriteLine("Please, enter the endpoint ID you want to use:");
 
-                string input = Console.ReadLine();
-                if (int.TryParse(input, out int number))
+                var input = Console.ReadLine();
+
+                if (int.TryParse(input, out int number) && _endpointsContainer.SearchId(Convert.ToInt32(input)))
                 {
-                    bool matchFound = false;
-                    foreach (var item in EndpintContainer.Endpints)
+                    for (int i = 0; i < EndpointsContainer<string>.Endpoints.Count; i++)
                     {
-                        if (number == int.Parse(item.Id.ToString()))
+                        if (number == EndpointsContainer<string>.Endpoints[i].Id)
                         {
-                            Console.WriteLine($"¡El número {number} coincide con el valor {item.Id} en la configuración!");
+                            //Console.WriteLine($"¡El número {number} coincide con el valor {EndpintContainer.Endpints[i].Id} en la configuración!");
 
+                            static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());
+                            var host = CreateHostBuilder(args).Build();
+                            var apiService = host.Services.GetRequiredService<ApiService>();
 
-                            matchFound = true;
-                            incorrectID = false;
-                            break;
+                            var baseUrl = ConfigurationManager.AppSettings["BaseUrl"];
+                            var endpoint = EndpointsContainer<string>.Endpoints[int.Parse(input)-1].Value;
+                            var apiKey = ConfigurationManager.AppSettings["APIKey"];
+
+                            var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
+                            Console.WriteLine(result);
                         }
-                    }
-
-                    if (!matchFound)
-                    {
-                        Console.WriteLine($"El número {number} no coincide con ninguno de los valores en la configuración.");
+                        else
+                        {
+                            Console.WriteLine($"The number {number}, does not match any of the values ​​in the configuration");
+                        }
                     }
                 }
                 else
                 {
-                    Console.WriteLine("La entrada no es un número válido.");
+                    Console.WriteLine("The entry is not a valid number.");
                 }
             }
             //Console.WriteLine(JsonSerializer.Serialize(APIContainer.APIs));
