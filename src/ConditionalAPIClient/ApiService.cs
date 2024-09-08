@@ -19,9 +19,9 @@ public class ApiService
         {
             var client = _httpClientFactory.CreateClient();
             client.BaseAddress = new Uri(baseUrl);
-            client.DefaultRequestHeaders.Accept.Clear();
+            //client.DefaultRequestHeaders.Accept.Clear();/* se utiliza para limpiar cualquier encabezado de aceptación
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            //client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
             var response = await client.GetAsync(endpoint);
 
@@ -34,10 +34,6 @@ public class ApiService
                 Console.WriteLine($"Error: {response.StatusCode}");
                 return null;
             }
-
-            //response.EnsureSuccessStatusCode();
-
-            //return await response.Content.ReadAsStringAsync();
         }
         catch (Exception ex)
         {

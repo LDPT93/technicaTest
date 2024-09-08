@@ -3,14 +3,35 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ConditionalAPIClient.Models;
 using ConditionalAPIClient.Service;
-
 public class Program
 {
+    private static List<Endpoint> endpoints = new List<Endpoint>();
+    private static System.Collections.Specialized.NameValueCollection appSettings = ConfigurationManager.AppSettings;
     static async Task Main(string[] args)
     {
-        var endpoints = new List<Endpoint>();
-        var appSettings = ConfigurationManager.AppSettings;
+        GetEndpointsToAppconfig();
+        var services = new ServiceCollection();
+        services.AddSingleton<IEndpointService>(provider => new EndpointService(endpoints));/*addsingleton única instancia de EndpointService*/
+        var serviceProvider = services.BuildServiceProvider();
+        var endpointService = serviceProvider.GetService<IEndpointService>();
+        Processor(endpointService, args);
+    }
+    #region Methods
+    private static async void Api(string[] args, IEndpointService endpointService, string input)
+    {
+        static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());
+        var host = CreateHostBuilder(args).Build();
+        var apiService = host.Services.GetRequiredService<ApiService>();
 
+        var baseUrl = ConfigurationManager.AppSettings["BaseUrl"];
+        var endpoint = endpointService.GetEndpointById(Convert.ToInt32(input)).Value;
+        var apiKey = ConfigurationManager.AppSettings["APIKey"];
+
+        var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
+        Console.WriteLine(result);
+    }
+    private static void GetEndpointsToAppconfig()
+    {
         int id = 1;
         foreach (var key in appSettings.AllKeys)
         {
@@ -21,12 +42,9 @@ public class Program
                 endpoints.Add(new Endpoint { Id = id++, Value = valor });
             }
         }
-
-        var services = new ServiceCollection();
-        services.AddSingleton<IEndpointService>(provider => new EndpointService(endpoints));/*addsingleton única instancia de EndpointService*/
-        var serviceProvider = services.BuildServiceProvider();
-        var endpointService = serviceProvider.GetService<IEndpointService>();
-
+    }
+    private static async void Processor(IEndpointService endpointService, string[] args)
+    {
         var allEndpoints = endpointService.GetAllEndpoints();
         if (allEndpoints != null && allEndpoints.Any())
         {
@@ -47,16 +65,7 @@ public class Program
                 {
                     if (endpointService.ExistsEndpointById(Convert.ToInt32(input)))
                     {
-                        static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());
-                        var host = CreateHostBuilder(args).Build();
-                        var apiService = host.Services.GetRequiredService<ApiService>();
-
-                        var baseUrl = ConfigurationManager.AppSettings["BaseUrl"];
-                        var endpoint = endpointService.GetEndpointById(Convert.ToInt32(input)).Value;
-                        var apiKey = ConfigurationManager.AppSettings["APIKey"];
-
-                        var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
-                        Console.WriteLine(result);
+                        Api(args, endpointService, input);
                     }
                     else
                     {
@@ -76,4 +85,6 @@ public class Program
             Console.ReadKey();
         }
     }
+    #endregion
+
 }
