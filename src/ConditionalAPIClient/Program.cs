@@ -4,34 +4,38 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Drawing;
 using System;
+using ConditionalAPIClient.Models;
+using ConditionalAPIClient.Service;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 public class Program
 {
     static async Task Main(string[] args)
     {
-        var _endpointsContainer = new EndpointsContainer<string>();
-
+        var endpoints = new List<Endpoint>();
         var appSettings = ConfigurationManager.AppSettings;
-        int _endpointid = 1;
+
+        int id = 1;
         foreach (var key in appSettings.AllKeys)
         {
-            if (key.Contains("Endpoint"))
+            if (key.StartsWith("Endpoint"))
             {
-                var newEndpoint = new Endpoint<string>(_endpointid, appSettings[key]);
-                _endpointsContainer.AddEndpoint(newEndpoint);
+                //var id = int.Parse(key.Replace("Endpoint", ""));
+                var valor = appSettings[key];
+                endpoints.Add(new Endpoint { Id = id++, Value = valor });
             }
-            _endpointid++;
         }
-        if (EndpointsContainer<string>.Endpoints.Count.Equals(0))
-        {
-            Console.WriteLine("There are no endpoints configured");
-        }
-        else
-        {
-            Console.WriteLine("List of available endpoints:");
+        var services = new ServiceCollection();
+        services.AddSingleton<IEndpointService>(provider => new EndpointService(endpoints));/*addsingleton única instancia de EndpointService*/
+        var serviceProvider = services.BuildServiceProvider();
+        var endpointService = serviceProvider.GetService<IEndpointService>();
 
-            for (int i = 0; i < EndpointsContainer<string>.Endpoints.Count; i++)
+        var allEndpoints = endpointService.GetAllEndpoints();
+        if (allEndpoints != null && allEndpoints.Any())
+        {
+            foreach (var endpoint in allEndpoints)
             {
-                Console.WriteLine("ID: " + EndpointsContainer<string>.Endpoints[i].Id + "   ---->   Endpint: " + EndpointsContainer<string>.Endpoints[i].Value);
+                Console.WriteLine("ID: " + endpoint.Id + "   ---->   Endpint: " + endpoint.Value);
             }
             Console.WriteLine("\n");
 
@@ -42,29 +46,27 @@ public class Program
 
                 var input = Console.ReadLine();
 
-                if (int.TryParse(input, out int number) && _endpointsContainer.SearchId(Convert.ToInt32(input)))
+                if (int.TryParse(input, out int number))
                 {
-                    for (int i = 0; i < EndpointsContainer<string>.Endpoints.Count; i++)
+                    if (endpointService.ExistsEndpointById(Convert.ToInt32(input)))
                     {
-                        if (number == EndpointsContainer<string>.Endpoints[i].Id)
-                        {
-                            //Console.WriteLine($"¡El número {number} coincide con el valor {EndpintContainer.Endpints[i].Id} en la configuración!");
+                        static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());
+                        var host = CreateHostBuilder(args).Build();
+                        var apiService = host.Services.GetRequiredService<ApiService>();
 
-                            static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());
-                            var host = CreateHostBuilder(args).Build();
-                            var apiService = host.Services.GetRequiredService<ApiService>();
+                        var baseUrl = ConfigurationManager.AppSettings["BaseUrl"];
 
-                            var baseUrl = ConfigurationManager.AppSettings["BaseUrl"];
-                            var endpoint = EndpointsContainer<string>.Endpoints[int.Parse(input)-1].Value;
-                            var apiKey = ConfigurationManager.AppSettings["APIKey"];
+                        var endpoint = endpointService.GetEndpointById(Convert.ToInt32(input)).Value;
 
-                            var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
-                            Console.WriteLine(result);
-                        }
-                        else
-                        {
-                            Console.WriteLine($"The number {number}, does not match any of the values ​​in the configuration");
-                        }
+                        //var endpoint = EndpointsContainer<string>.Endpoints[int.Parse(input) - 1].Value;
+                        var apiKey = ConfigurationManager.AppSettings["APIKey"];
+
+                        var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
+                        Console.WriteLine(result);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"The number {input}, does not match any of the available IDs.");
                     }
                 }
                 else
@@ -72,8 +74,22 @@ public class Program
                     Console.WriteLine("The entry is not a valid number.");
                 }
             }
-            //Console.WriteLine(JsonSerializer.Serialize(APIContainer.APIs));
-            Console.WriteLine("test");
+        }
+        else
+        {
+            Console.WriteLine("There are no endpoints configured");
+            Console.WriteLine("Press any key to close...");
+            Console.ReadKey();
         }
     }
 }
+
+
+//
+
+
+//    
+//}
+////Console.WriteLine(JsonSerializer.Serialize(APIContainer.APIs));
+//Console.WriteLine("test");
+//}
