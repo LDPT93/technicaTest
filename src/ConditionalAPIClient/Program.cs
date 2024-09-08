@@ -11,7 +11,7 @@ public class Program
     {
         GetEndpointsToAppconfig();
         var services = new ServiceCollection();
-        services.AddSingleton<IEndpointService>(provider => new EndpointService(endpoints));/*addsingleton única instancia de EndpointService*/
+        services.AddSingleton<IEndpointService>(provider => new EndpointService(endpoints));/**/
         var serviceProvider = services.BuildServiceProvider();
         var endpointService = serviceProvider.GetService<IEndpointService>();
         Processor(endpointService, args);
