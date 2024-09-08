@@ -1,12 +1,8 @@
-﻿using ConditionalAPIClient;
-using System.Configuration;
+﻿using System.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Drawing;
-using System;
 using ConditionalAPIClient.Models;
 using ConditionalAPIClient.Service;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public class Program
 {
@@ -25,6 +21,7 @@ public class Program
                 endpoints.Add(new Endpoint { Id = id++, Value = valor });
             }
         }
+
         var services = new ServiceCollection();
         services.AddSingleton<IEndpointService>(provider => new EndpointService(endpoints));/*addsingleton única instancia de EndpointService*/
         var serviceProvider = services.BuildServiceProvider();
@@ -55,10 +52,7 @@ public class Program
                         var apiService = host.Services.GetRequiredService<ApiService>();
 
                         var baseUrl = ConfigurationManager.AppSettings["BaseUrl"];
-
                         var endpoint = endpointService.GetEndpointById(Convert.ToInt32(input)).Value;
-
-                        //var endpoint = EndpointsContainer<string>.Endpoints[int.Parse(input) - 1].Value;
                         var apiKey = ConfigurationManager.AppSettings["APIKey"];
 
                         var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
@@ -83,13 +77,3 @@ public class Program
         }
     }
 }
-
-
-//
-
-
-//    
-//}
-////Console.WriteLine(JsonSerializer.Serialize(APIContainer.APIs));
-//Console.WriteLine("test");
-//}
