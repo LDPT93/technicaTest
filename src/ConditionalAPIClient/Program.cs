@@ -3,6 +3,9 @@ using Microsoft.Extensions.Hosting;
 using ConditionalAPIClient.Models;
 using ConditionalAPIClient.Service;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
+using System.Net;
+
 
 public class Program()
 {
@@ -35,7 +38,7 @@ public class Program()
         return configuration;
     }
     private static async void Processor(IEndpointService endpointService, string[] args, IConfiguration configuration)
-    {
+    {        
         var allEndpoints = endpointService.GetAllEndpoints();
         if (allEndpoints != null && allEndpoints.Any())
         {
@@ -71,11 +74,22 @@ public class Program()
         }
         else
         {
-            Console.WriteLine("There are no endpoints configured");
+            Console.WriteLine("There are no endpoints configured, please, insert at least one...");
+            while (true)
+            {
+                var input = Console.ReadLine();
+                string newParameter = "Endpoint2";
+                string newValue = input;
+                var json = File.ReadAllText("appsettings.json");
+                var jsonObj = JObject.Parse(json);
+                jsonObj["APIconfig"][newParameter] = newValue;
+                File.WriteAllText("appsettings.json", jsonObj.ToString());
+                break;
+            }
             Console.WriteLine("Press any key to close...");
             Console.ReadKey();
         }
-    }
+    }    
     private static async void Api(string[] args, IEndpointService endpointService, string input, IConfiguration configuration)
     {
         static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());

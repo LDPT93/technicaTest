@@ -11,11 +11,10 @@ namespace ConditionalAPIClientTest
         {
             var endpoints = new List<Endpoint>
         {
-            new Endpoint { Id = 1, Value = "/todos/0" },
-            new Endpoint { Id = 2, Value = "/todos/1" },
-            new Endpoint { Id = 3, Value = "/todos/2" },
-            new Endpoint { Id = 4, Value = "/todos/3" },
-            new Endpoint { Id = 5, Value = "/todos/4" }
+            new Endpoint { Id = 1, Value = "/v2/schedule" },
+            new Endpoint { Id = 2, Value = "/v2/schedule_expanded" },
+            new Endpoint { Id = 3, Value = "33333" },       
+            new Endpoint { Id = 4 },
         };
             _endpointService = new EndpointService(endpoints);
         }
@@ -23,31 +22,29 @@ namespace ConditionalAPIClientTest
         [Fact]
         public void GetEndpointById_ShouldReturnCorrectEndpoint()
         {
-            var endpoint = _endpointService.GetEndpointById(1);
-            Assert.NotNull(endpoint);
-            Assert.Equal(1, endpoint.Id);
-            Assert.Equal("/todos/0", endpoint.Value);
+            var endpoint = _endpointService.GetEndpointById(4);
+            Assert.NotNull(endpoint.Value);
+            Assert.Equal("/v2/schedule_expanded", endpoint.Value);
         }
 
         [Fact]
         public void GetAllEndpoints_ShouldReturnAllEndpoints()
         {
             var allEndpoints = _endpointService.GetAllEndpoints();
-            Assert.NotNull(allEndpoints);
-            Assert.Equal(5, allEndpoints.Count());
+            Assert.Equal(5, allEndpoints.Count());            
         }
 
         [Fact]
         public void ExistsEndpointById_ShouldReturnTrueIfExists()
         {
-            var exists = _endpointService.ExistsEndpointById(1);
+            var exists = _endpointService.ExistsEndpointById(4);
             Assert.True(exists);
         }
 
         [Fact]
         public void ExistsEndpointById_ShouldReturnFalseIfNotExists()
         {
-            var exists = _endpointService.ExistsEndpointById(3);
+            var exists = _endpointService.ExistsEndpointById(10);
             Assert.False(exists);
         }
     }
