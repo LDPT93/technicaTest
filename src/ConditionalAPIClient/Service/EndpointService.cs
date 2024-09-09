@@ -1,6 +1,5 @@
 ﻿using ConditionalAPIClient.Service;
 using ConditionalAPIClient.Models;
-
 public class EndpointService : IEndpointService
 {
     private readonly List<Endpoint> _endpoints;

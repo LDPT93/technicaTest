@@ -3,12 +3,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace EncrypterDateProducer
+namespace EncrypterDateProducer.Service
 {
     public static class SHA268generator
     {
         public static readonly SHA256 Sha256 = SHA256.Create();
-        
+
         public static string CurrentTimeToSha256()
         {
             DateTime utcNow = DateTime.UtcNow;

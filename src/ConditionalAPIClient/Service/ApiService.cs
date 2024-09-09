@@ -1,10 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-
-public class ApiService
+﻿public class ApiService
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -18,16 +12,9 @@ public class ApiService
         try
         {
             var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(baseUrl);
-
-            //client.DefaultRequestHeaders.Accept.Clear();/* se utiliza para limpiar cualquier encabezado de aceptación*/
-            //client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            //http://146.190.130.247:5011/donbest/v2/schedule_expanded?token=reeEQitM0rEsVOdhd7Ed
-
-            var urlWithToken = $"{endpoint}?token={apiKey}";
-
-            var response = await client.GetAsync(urlWithToken);
-
+            //client.BaseAddress = new Uri(baseUrl);
+            var urlEndpointApiKey = $"{baseUrl}{endpoint}?token={apiKey}";
+            var response = await client.GetAsync(urlEndpointApiKey);
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadAsStringAsync();

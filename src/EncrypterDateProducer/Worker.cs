@@ -1,8 +1,6 @@
 using Confluent.Kafka;
+using EncrypterDateProducer.Service;
 using Microsoft.Extensions.Options;
-using Shared.Models;
-using System.Text.Json;
-//using Shared.Models;
 
 namespace EncrypterDateProducer
 {
@@ -30,14 +28,13 @@ namespace EncrypterDateProducer
                     try
                     {
                         var currentTimeSerialized = SHA268generator.CurrentTimeToSha256();
-                        //MessageDTO jsonSHA265Deserialized = JsonSerializer.Deserialize<MessageDTO>(currentTimeSerialized);
                         var message = new Message<Null, string> { Value = currentTimeSerialized };
-                        await producer.ProduceAsync(_kafkaSettings.Topic, message, stoppingToken);/*_kafkaSettings.Topic*/
-                        _logger.LogInformation("Mensaje enviado a Kafka-Redpanda a las {time}", currentTimeSerialized);
+                        await producer.ProduceAsync(_kafkaSettings.Topic, message, stoppingToken);
+                        _logger.LogInformation("Message sent to Kafka-Redpanda at: {time}", currentTimeSerialized);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error enviando mensaje a Kafka-Redpanda");
+                        _logger.LogError(ex, "Error sending message to Kafka-Redpanda");
                     }
                     await Task.Delay(1000, stoppingToken);
                 }
