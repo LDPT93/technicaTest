@@ -19,11 +19,14 @@ public class ApiService
         {
             var client = _httpClientFactory.CreateClient();
             client.BaseAddress = new Uri(baseUrl);
-            //client.DefaultRequestHeaders.Accept.Clear();/* se utiliza para limpiar cualquier encabezado de aceptación
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
-            var response = await client.GetAsync(endpoint);
+            //client.DefaultRequestHeaders.Accept.Clear();/* se utiliza para limpiar cualquier encabezado de aceptación*/
+            //client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            //http://146.190.130.247:5011/donbest/v2/schedule_expanded?token=reeEQitM0rEsVOdhd7Ed
+
+            var urlWithToken = $"{endpoint}?token={apiKey}";
+
+            var response = await client.GetAsync(urlWithToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -37,7 +40,7 @@ public class ApiService
         }
         catch (Exception ex)
         {
-
+            Console.WriteLine($"Exception: {ex.Message}");
             throw;
         }
 
