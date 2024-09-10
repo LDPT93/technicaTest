@@ -5,6 +5,7 @@ using ConditionalAPIClient.Service;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using System.Net;
+using System.Security.Cryptography;
 
 
 public class Program()
@@ -38,19 +39,12 @@ public class Program()
         return configuration;
     }
     private static async void Processor(IEndpointService endpointService, string[] args, IConfiguration configuration)
-    {        
+    {
         var allEndpoints = endpointService.GetAllEndpoints();
         if (allEndpoints != null && allEndpoints.Any())
         {
-            foreach (var endpoint in allEndpoints)
-            {
-                Console.WriteLine("ID: " + endpoint.Id + "   ---->   Endpint: " + endpoint.Value);
-            }
-            Console.WriteLine("\n");
-
+            EmpointsTolist(allEndpoints);
             bool incorrectID = true;
-            Console.WriteLine("Please, enter the endpoint ID you want to use:");
-
             while (incorrectID)
             {
                 var input = Console.ReadLine();
@@ -75,21 +69,12 @@ public class Program()
         else
         {
             Console.WriteLine("There are no endpoints configured, please, insert at least one...");
-            while (true)
-            {
-                var input = Console.ReadLine();
-                string newParameter = "Endpoint2";
-                string newValue = input;
-                var json = File.ReadAllText("appsettings.json");
-                var jsonObj = JObject.Parse(json);
-                jsonObj["APIconfig"][newParameter] = newValue;
-                File.WriteAllText("appsettings.json", jsonObj.ToString());
-                break;
-            }
-            Console.WriteLine("Press any key to close...");
-            Console.ReadKey();
+            var input = Console.ReadLine();
+            AddNewEndpoitToConfig(input);
+            GetEndpointsToappsettings();
+            Processor(endpointService, args, configuration);            
         }
-    }    
+    }
     private static async void Api(string[] args, IEndpointService endpointService, string input, IConfiguration configuration)
     {
         static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());
@@ -102,7 +87,28 @@ public class Program()
 
         var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
         Console.WriteLine(result);
+        EmpointsTolist(endpointService.GetAllEndpoints());
+    }
+    private static void EmpointsTolist(IEnumerable<Endpoint> allEndpoints)
+    {
+        Console.WriteLine("List of available endpoints:");
+
+        foreach (var endpoint in allEndpoints)
+        {
+            Console.WriteLine("ID: " + endpoint.Id + "   ---->   Endpint: " + endpoint.Value);
+        }
+        Console.WriteLine("\n");
+
         Console.WriteLine("Please, enter the endpoint ID you want to use:");
+    }
+    private static void AddNewEndpoitToConfig(string input)
+    {
+        string newParameter = "Endpoint1";
+        string newValue = input;
+        var json = File.ReadAllText("appsettings.json");
+        var jsonObj = JObject.Parse(json);
+        jsonObj["APIconfig"][newParameter] = newValue;
+        File.WriteAllText("appsettings.json", jsonObj.ToString());
     }
     #endregion
 
