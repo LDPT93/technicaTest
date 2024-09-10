@@ -30,11 +30,11 @@ namespace EncrypterDateProducer
                         var currentTimeSerialized = SHA268generator.CurrentTimeToSha256();
                         var message = new Message<Null, string> { Value = currentTimeSerialized };
                         await producer.ProduceAsync(_kafkaSettings.Topic, message, stoppingToken);
-                        _logger.LogInformation("Message sent to Kafka-Redpanda at: {time}", currentTimeSerialized);
+                        _logger.LogInformation("Message sent to Kafka at: {time}", currentTimeSerialized);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error sending message to Kafka-Redpanda");
+                        _logger.LogError(ex, "Error sending message to Kafka");
                     }
                     await Task.Delay(1000, stoppingToken);
                 }

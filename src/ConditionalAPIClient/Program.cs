@@ -1,32 +1,31 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ConditionalAPIClient.Models;
-using ConditionalAPIClient.Service;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
-using System.Net;
-using System.Security.Cryptography;
-
-
+using System;
+using ConditionalAPIClient.Service;
 public class Program()
 {
-    private static List<Endpoint> endpoints = new List<Endpoint>();
     static async Task Main(string[] args)
-    {
-        var configuration = GetEndpointsToappsettings();
-
-        var services = new ServiceCollection();
-        services.AddSingleton<IEndpointService>(provider => new EndpointService(endpoints));
-        var serviceProvider = services.BuildServiceProvider();
-        var endpointService = serviceProvider.GetService<IEndpointService>();
-
-        Processor(endpointService, args, configuration);
-    }
-    #region Methods
-    private static IConfiguration GetEndpointsToappsettings()
     {
         var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
         IConfiguration configuration = builder.Build();
+        EndpointsContainer endpointContainer = new EndpointsContainer();
+
+        var serviceCollection = new ServiceCollection();
+        ConfigureClient(serviceCollection);
+        var service = serviceCollection.BuildServiceProvider();
+        var client = service.GetRequiredService<IClient>();
+        
+
+
+        GetEndpointsToappsettings(configuration, endpointContainer);
+        Processor(endpointContainer, args, configuration);
+    }
+    #region Methods
+    public static void GetEndpointsToappsettings(IConfiguration configuration, EndpointsContainer endpointsContainer)
+    {
         var endpointsList = configuration.GetSection("APIconfig").GetChildren().Where(c => c.Key.Contains("Endpoint")).Select(c => c.Key).ToList();
         int id = 1;
         foreach (var endpoint in endpointsList)
@@ -34,30 +33,28 @@ public class Program()
             var apiConfig = "APIconfig";
             var key = endpoint;
             var endpintValue = configuration[$"{apiConfig}:{key}"];
-            endpoints.Add(new Endpoint { Id = id++, Value = endpintValue });
+            endpointsContainer.AddEndpointToList(new Endpoint { Id = id++, Value = endpintValue });
         }
-        return configuration;
     }
-    private static async void Processor(IEndpointService endpointService, string[] args, IConfiguration configuration)
+    public static async void Processor(EndpointsContainer endpointContainer, string[] args, IConfiguration configuration)
     {
-        var allEndpoints = endpointService.GetAllEndpoints();
+        var allEndpoints = endpointContainer.GetAllEndpoints();
         if (allEndpoints != null && allEndpoints.Any())
         {
             EmpointsTolist(allEndpoints);
-            bool incorrectID = true;
-            while (incorrectID)
+            while (true)
             {
                 var input = Console.ReadLine();
 
                 if (int.TryParse(input, out int number))
                 {
-                    if (endpointService.ExistsEndpointById(Convert.ToInt32(input)))
+                    if (endpointContainer.ExistsEndpointById(Convert.ToInt32(number)))
                     {
-                        Api(args, endpointService, input, configuration);
+                        Api(args, endpointContainer, number, configuration);
                     }
                     else
                     {
-                        Console.WriteLine($"The number {input}, does not match any of the available IDs.");
+                        Console.WriteLine($"The number {number}, does not match any of the available IDs.");
                     }
                 }
                 else
@@ -71,22 +68,19 @@ public class Program()
             Console.WriteLine("There are no endpoints configured, please, insert at least one...");
             var input = Console.ReadLine();
             AddNewEndpoitToConfig(input);
-            GetEndpointsToappsettings();
-            Processor(endpointService, args, configuration);            
+            GetEndpointsToappsettings(configuration, endpointContainer);
+            Processor(endpointContainer, args, configuration);
         }
     }
-    private static async void Api(string[] args, IEndpointService endpointService, string input, IConfiguration configuration)
+    private static async void Api(string[] args, EndpointsContainer endpointService, int input, IConfiguration configuration)
     {
-        static IHostBuilder CreateHostBuilder(string[] args) => Host.CreateDefaultBuilder(args).ConfigureServices((_, services) => services.AddHttpClient().AddTransient<ApiService>());
-        var host = CreateHostBuilder(args).Build();
-        var apiService = host.Services.GetRequiredService<ApiService>();
-
         var baseUrl = configuration["APIconfig:BaseUrl"];
         var endpoint = endpointService.GetEndpointById(Convert.ToInt32(input)).Value;
         var apiKey = configuration["APIconfig:APIKey"];
 
-        var result = await apiService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
-        Console.WriteLine(result);
+
+        //var result = await myService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
+        //Console.WriteLine(result);
         EmpointsTolist(endpointService.GetAllEndpoints());
     }
     private static void EmpointsTolist(IEnumerable<Endpoint> allEndpoints)
@@ -109,6 +103,10 @@ public class Program()
         var jsonObj = JObject.Parse(json);
         jsonObj["APIconfig"][newParameter] = newValue;
         File.WriteAllText("appsettings.json", jsonObj.ToString());
+    }
+    private static void ConfigureClient(ServiceCollection services)
+    {
+        services.AddHttpClient<IClient, Client>();
     }
     #endregion
 

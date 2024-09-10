@@ -9,14 +9,14 @@ services:
     container_name: producer
     image: producer
     environment:
-      DOTNET_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Prod
     networks:
       - redpanda_network
   consumer:
     container_name: consumer
     image: consumer
     environment:
-      DOTNET_ENVIRONMENT: Development
+      DOTNET_ENVIRONMENT: Prod
     networks:
       - redpanda_network
 

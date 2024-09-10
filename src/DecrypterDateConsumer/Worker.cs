@@ -38,7 +38,7 @@ namespace DecrypterDateConsumer
                         var consumeResult = consumer.Consume(stoppingToken);
                         //MessageDTO jsonSHA265Deserialized = JsonSerializer.Deserialize<MessageDTO>(consumeResult.Message.Value);
 
-                        _logger.LogInformation($"Message received: {consumeResult.Message.Value} a las {DateTime.UtcNow}");
+                        _logger.LogInformation($"Message received: {consumeResult.Message.Value} at {DateTime.UtcNow}");
                     }
                     catch (ConsumeException ex)
                     {
