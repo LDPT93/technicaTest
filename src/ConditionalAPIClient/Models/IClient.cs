@@ -1,5 +1,4 @@
-﻿
-namespace ConditionalAPIClient.Service
+﻿namespace ConditionalAPIClient.Models
 {
     public interface IClient
     {
