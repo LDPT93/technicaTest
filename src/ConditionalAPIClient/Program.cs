@@ -17,11 +17,9 @@ public class Program()
         ConfigureClient(serviceCollection);
         var service = serviceCollection.BuildServiceProvider();
         var client = service.GetRequiredService<IClient>();
-        
-
 
         GetEndpointsToappsettings(configuration, endpointContainer);
-        Processor(endpointContainer, args, configuration);
+        ProcessEnteredParameter(endpointContainer, configuration, client);
     }
     #region Methods
     public static void GetEndpointsToappsettings(IConfiguration configuration, EndpointsContainer endpointsContainer)
@@ -36,7 +34,7 @@ public class Program()
             endpointsContainer.AddEndpointToList(new Endpoint { Id = id++, Value = endpintValue });
         }
     }
-    public static async void Processor(EndpointsContainer endpointContainer, string[] args, IConfiguration configuration)
+    public static async void ProcessEnteredParameter(EndpointsContainer endpointContainer, IConfiguration configuration, IClient client)
     {
         var allEndpoints = endpointContainer.GetAllEndpoints();
         if (allEndpoints != null && allEndpoints.Any())
@@ -50,7 +48,8 @@ public class Program()
                 {
                     if (endpointContainer.ExistsEndpointById(Convert.ToInt32(number)))
                     {
-                        Api(args, endpointContainer, number, configuration);
+
+                        RequestServiceToTheApi(endpointContainer, number, configuration, client);
                     }
                     else
                     {
@@ -69,18 +68,16 @@ public class Program()
             var input = Console.ReadLine();
             AddNewEndpoitToConfig(input);
             GetEndpointsToappsettings(configuration, endpointContainer);
-            Processor(endpointContainer, args, configuration);
+            ProcessEnteredParameter(endpointContainer, configuration, client);
         }
     }
-    private static async void Api(string[] args, EndpointsContainer endpointService, int input, IConfiguration configuration)
+    private static async void RequestServiceToTheApi(EndpointsContainer endpointService, int input, IConfiguration configuration, IClient client)
     {
-        var baseUrl = configuration["APIconfig:BaseUrl"];
         var endpoint = endpointService.GetEndpointById(Convert.ToInt32(input)).Value;
         var apiKey = configuration["APIconfig:APIKey"];
-
-
-        //var result = await myService.GetDataFromApiAsync(baseUrl, endpoint, apiKey);
-        //Console.WriteLine(result);
+        var baseUrl = configuration["APIconfig:BaseUrl"];
+        var result = await client.ApiRequest(baseUrl, endpoint, apiKey);
+        Console.WriteLine(result);
         EmpointsTolist(endpointService.GetAllEndpoints());
     }
     private static void EmpointsTolist(IEnumerable<Endpoint> allEndpoints)

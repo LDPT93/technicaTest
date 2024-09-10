@@ -8,15 +8,25 @@ namespace ConditionalAPIClient.Service
 {
     public class Client : IClient
     {
-        private readonly HttpClient httpClient;
-        private readonly string baseURL = "http://146.190.130.247:5011/donbest";
-        public Client(HttpClient _httpClient)
+        private readonly HttpClient _httpClient;
+        public Client(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
-        public async Task<string> ApiRequest()
+        public async Task<string> ApiRequest(string baseURL, string endpoint, string apiKey)
         {
-            return await httpClient.GetStringAsync(baseURL);
+
+            var fullURL = $"{baseURL}{endpoint}?token={apiKey}";
+            var result = await _httpClient.GetAsync(fullURL);
+
+            if (result.IsSuccessStatusCode)
+            {
+                return await result.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                return $"Error: {result.StatusCode}";
+            }
         }
     }
 }

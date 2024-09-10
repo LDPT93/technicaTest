@@ -30,7 +30,7 @@ namespace ConditionalAPIClientTest
 
             string[] args = new string[] { };
 
-            var exception = Assert.Throws<InvalidOperationException>(() => Program.Processor(endpointService.Object, args, configuration));
+            var exception = Assert.Throws<InvalidOperationException>(() => Program.ProcessEnteredParameter(endpointService.Object, args, configuration));
 
             Assert.Null(exception);
         }

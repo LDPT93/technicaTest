@@ -3,6 +3,6 @@ namespace ConditionalAPIClient.Service
 {
     public interface IClient
     {
-        Task<string> ApiRequest();
+        Task<string> ApiRequest(string baseURL, string endpoint, string apiKey);
     }
 }
