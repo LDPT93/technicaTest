@@ -1,9 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using ConditionalAPIClient.Models;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
-using System;
 using ConditionalAPIClient.Service;
 public class Program()
 {
@@ -39,7 +37,7 @@ public class Program()
         var allEndpoints = endpointContainer.GetAllEndpoints();
         if (allEndpoints != null && allEndpoints.Any())
         {
-            EmpointsTolist(allEndpoints);
+            PrintEmpointsList(allEndpoints);
             while (true)
             {
                 var input = Console.ReadLine();
@@ -78,9 +76,9 @@ public class Program()
         var baseUrl = configuration["APIconfig:BaseUrl"];
         var result = await client.ApiRequest(baseUrl, endpoint, apiKey);
         Console.WriteLine(result);
-        EmpointsTolist(endpointService.GetAllEndpoints());
+        PrintEmpointsList(endpointService.GetAllEndpoints());
     }
-    private static void EmpointsTolist(IEnumerable<Endpoint> allEndpoints)
+    private static void PrintEmpointsList(IEnumerable<Endpoint> allEndpoints)
     {
         Console.WriteLine("List of available endpoints:");
 

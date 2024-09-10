@@ -7,12 +7,10 @@ public class EndpointsContainer
     {
         return _endpoints.FirstOrDefault(e => e.Id == id);
     }
-
     public IEnumerable<Endpoint> GetAllEndpoints()
     {
         return _endpoints;
     }
-
     public bool ExistsEndpointById(int id)
     {
         return _endpoints.Any(e => e.Id == id);
