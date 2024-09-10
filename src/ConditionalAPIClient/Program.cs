@@ -58,7 +58,7 @@ public class Program()
                 {
                     if (endpoints.Any(e => e.Id == number))
                     {
-                        RequestServiceToTheApi(endpointContainer, number, configuration, client);
+                        //RequestServiceToTheApi(endpointContainer, number, configuration, client);
                     }
                     else
                     {
