@@ -1,6 +1,6 @@
 ﻿namespace ConditionalAPIClient.Models
 {
-    public class APIconfig
+    public class APIConfig
     {
         public string BaseUrl { get; set; }
         public string APIKey { get; set; }

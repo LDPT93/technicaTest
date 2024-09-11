@@ -1,99 +1,71 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using ConditionalAPIClient.Models;
+﻿using ConditionalAPIClient.Models;
+using ConditionalAPIClient.Service;
 using Microsoft.Extensions.Configuration;
-using System.Net.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 public class Program()
 {
-    public static IConfiguration? Configuration;
     static async Task Main(string[] args)
     {
-        List<Endpoint> endpoints = new List<Endpoint>();
+        (var apiClient, var apiConfig) = InjectAllServices();
 
-        var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-        Configuration = builder.Build();
-        var apiConfig = Configuration.GetSection("APIconfig").Get<APIconfig>();
-
-        ServiceCollection services = new ServiceCollection();
-        services.AddHttpClient<IApiClient, ApiClient>();
-        services.AddTransient<IApiClient, ApiClient>();
-        var serviceProvider = services.BuildServiceProvider();
-        var httpclient = serviceProvider.GetService<IApiClient>();
-
-        var key = "reeEQitM0rEsVOdhd7Ed";
-        var endpoint = "/v2/schedule";
-
-        var test = httpclient.GetSchedule(endpoint, key);
-
-        // GetEndpointsToappsettings(endpoints, apiConfig);
-        //ProcessEnteredParameter(endpoints, apiConfig, client);
-    }
-    #region Methods
-    public static void GetEndpointsToappsettings(List<Endpoint> endpoints, APIconfig apiconfig)
-    {
-        List<string> endpointsList = new List<string>
-            {
-                apiconfig.Endpoint1,
-                apiconfig.Endpoint2,
-            };
-        int count = 1;
-        foreach (var e in endpointsList)
+        var exitSelected = false;
+        while (!exitSelected)
         {
-            Endpoint newEndpiont = new Endpoint { Id = count++, Value = e };
-            endpoints.Add(newEndpiont);
-        }
-        //Console.WriteLine("Please, enter the endpoint ID you want to use:");
-    }
-    public static async void ProcessEnteredParameter(List<Endpoint> endpoints, APIconfig apiconfig, IApiClient httpclient)
-    {
-        if (endpoints != null && endpoints.Any())
-        {
-            PrintEmpointsList(endpoints);
-            bool waitForInput = true;
-            while (waitForInput)
+            Console.WriteLine("List of available endpoints:");
+            Console.WriteLine($"Endpoint one (1): {apiConfig.Endpoint1}");
+            Console.WriteLine($"Endpoint two (2): {apiConfig.Endpoint2}");
+            Console.Write(@"Please, enter the endpoint ID you want to use or type ""EXIT"" to exit :");
+            var input = Console.ReadLine();
+            if (!input.ToLower().Equals("exit"))
             {
-                var input = Console.ReadLine();
-                if (input == "EXIT")
-                {
-                    waitForInput = false;
-                }
                 if (int.TryParse(input, out int number))
                 {
-                    if (endpoints.Any(e => e.Id == number))
+                    var selectedEndpoint = string.Empty;
+                    switch (number)
                     {
-                        var key = "reeEQitM0rEsVOdhd7Ed";
-                        var endpoint = "/v2/schedule";
-
-                        httpclient.GetSchedule(endpoint, key);
+                        case 1:
+                            selectedEndpoint = apiConfig.Endpoint1;
+                            break;
+                        case 2:
+                            selectedEndpoint = apiConfig.Endpoint2;
+                            break;
+                        default:
+                            Console.WriteLine("You need select the option 1 or 2");
+                            Console.WriteLine();
+                            break;
                     }
-                    else
+                    if (!string.IsNullOrEmpty(selectedEndpoint))
                     {
-                        Console.WriteLine($"The number {number}, does not match any of the available IDs.");
+                        var result = await apiClient.GetSchedule(selectedEndpoint);
+                        Console.WriteLine(result);
+                        Console.WriteLine();
                     }
                 }
                 else
                 {
                     Console.WriteLine("The entry is not a valid number.");
+                    Console.WriteLine();
                 }
             }
-        }
-        else
-        {
-            Console.WriteLine("There are no endpoints configured");
+            else
+                exitSelected = true;
         }
     }
-    private static void PrintEmpointsList(List<Endpoint> endpoints)
+
+    private static (IApiClient, APIConfig) InjectAllServices()
     {
-        Console.WriteLine("List of available endpoints:");
+        var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+        var configuration = builder.Build();
 
-        foreach (var endpoint in endpoints)
-        {
-            Console.WriteLine("ID: " + endpoint.Id + "   ---->   Endpint: " + endpoint.Value);
-        }
-        Console.WriteLine("\n");
-
-        Console.WriteLine(@"Please, enter the endpoint ID you want to use or type ""EXIT"" to exit :");
+        var services = new ServiceCollection();
+        services.AddHttpClient<IApiClient, ApiClient>();
+        services.AddTransient<IApiClient, ApiClient>();
+        services.Configure<APIConfig>(configuration.GetSection("APIconfig"));
+        var serviceProvider = services.BuildServiceProvider();
+        var httpclient = serviceProvider.GetService<IApiClient>();
+        var apiConfig = serviceProvider.GetService<IOptions<APIConfig>>();
+        return (apiClient: httpclient, apiConfig: apiConfig.Value);
     }
-    #endregion
-
 }

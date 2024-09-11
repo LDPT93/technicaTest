@@ -1,5 +1,7 @@
-﻿
-public interface IApiClient
+﻿namespace ConditionalAPIClient.Service
 {
-    Task GetSchedule(string endpint, string key);
+    public interface IApiClient
+    {
+        Task<string> GetSchedule(string endpoint);
+    }
 }
