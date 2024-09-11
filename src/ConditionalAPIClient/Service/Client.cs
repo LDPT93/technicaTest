@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ConditionalAPIClient.Models;
+﻿using ConditionalAPIClient.Models;
+using System.Net.Http.Json;
 
 namespace ConditionalAPIClient.Service
 {
@@ -14,20 +10,30 @@ namespace ConditionalAPIClient.Service
         {
             _httpClient = httpClient;
         }
-        public async Task<string> ApiRequest(string baseURL, string endpoint, string apiKey)
+        public async Task<string> ApiRequest(APIconfig apiConfig, int endpointId, List<Endpoint> endpoints)
         {
-
-            var fullURL = $"{baseURL}{endpoint}?token={apiKey}";
-            var result = await _httpClient.GetAsync(fullURL);
-
-            if (result.IsSuccessStatusCode)
+            try
             {
-                return await result.Content.ReadAsStringAsync();
+                var endpintValue = endpoints.FirstOrDefault(e => e.Id == endpointId).Value;
+                var fullURL = $"{apiConfig.BaseUrl}{endpintValue}?token={apiConfig.APIKey}";
+                var result = await _httpClient.GetAsync(fullURL);
+
+                if (result.IsSuccessStatusCode)
+                {
+                    return await result.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    return $"Error: {result.StatusCode}";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return $"Error: {result.StatusCode}";
+                Console.WriteLine(ex.ToString());
+                Console.ReadLine();
+                throw;
             }
+
         }
     }
 }

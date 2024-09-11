@@ -1,7 +1,5 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Options;
-using Shared.Models;
-using System.Text.Json;
 
 namespace DecrypterDateConsumer
 {
@@ -23,6 +21,7 @@ namespace DecrypterDateConsumer
             {
                 BootstrapServers = _kafkaSettings.BootstrapServers,
                 GroupId = _kafkaSettings.GroupId,
+                EnableAutoCommit = false
             };
 
             string kafkaTopic = _kafkaSettings.Topic;
@@ -36,9 +35,10 @@ namespace DecrypterDateConsumer
                     try
                     {
                         var consumeResult = consumer.Consume(stoppingToken);
-                        //MessageDTO jsonSHA265Deserialized = JsonSerializer.Deserialize<MessageDTO>(consumeResult.Message.Value);
 
                         _logger.LogInformation($"Message received: {consumeResult.Message.Value} at {DateTime.UtcNow}");
+
+                        consumer.Commit(consumeResult);
                     }
                     catch (ConsumeException ex)
                     {
