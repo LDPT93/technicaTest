@@ -59,7 +59,6 @@ public class Program()
     {
         var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
         var configuration = builder.Build();
-        //var apiConfig = Configuration.GetSection("APIconfig").Get<APIconfig>();
 
         var services = new ServiceCollection();
         services.AddHttpClient<IApiClient, ApiClient>();
