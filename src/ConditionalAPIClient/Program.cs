@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using ConditionalAPIClient.Models;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
-using ConditionalAPIClient.Service;
+using System.Net.Http;
+
 public class Program()
 {
     public static IConfiguration? Configuration;
@@ -14,13 +14,19 @@ public class Program()
         Configuration = builder.Build();
         var apiConfig = Configuration.GetSection("APIconfig").Get<APIconfig>();
 
-        var serviceCollection = new ServiceCollection();
-        ConfigureClient(serviceCollection);
-        var service = serviceCollection.BuildServiceProvider();
-        var client = service.GetRequiredService<IClient>();
+        ServiceCollection services = new ServiceCollection();
+        services.AddHttpClient<IApiClient, ApiClient>();
+        services.AddTransient<IApiClient, ApiClient>();
+        var serviceProvider = services.BuildServiceProvider();
+        var httpclient = serviceProvider.GetService<IApiClient>();
 
-        GetEndpointsToappsettings(endpoints, apiConfig);
-        ProcessEnteredParameter(endpoints, apiConfig, client);
+        var key = "reeEQitM0rEsVOdhd7Ed";
+        var endpoint = "/v2/schedule";
+
+        var test = httpclient.GetSchedule(endpoint, key);
+
+        // GetEndpointsToappsettings(endpoints, apiConfig);
+        //ProcessEnteredParameter(endpoints, apiConfig, client);
     }
     #region Methods
     public static void GetEndpointsToappsettings(List<Endpoint> endpoints, APIconfig apiconfig)
@@ -38,7 +44,7 @@ public class Program()
         }
         //Console.WriteLine("Please, enter the endpoint ID you want to use:");
     }
-    public static async void ProcessEnteredParameter(List<Endpoint> endpoints, APIconfig apiconfig, IClient client)
+    public static async void ProcessEnteredParameter(List<Endpoint> endpoints, APIconfig apiconfig, IApiClient httpclient)
     {
         if (endpoints != null && endpoints.Any())
         {
@@ -55,7 +61,10 @@ public class Program()
                 {
                     if (endpoints.Any(e => e.Id == number))
                     {
-                        var result = await client.ApiRequest(apiconfig, number, endpoints);
+                        var key = "reeEQitM0rEsVOdhd7Ed";
+                        var endpoint = "/v2/schedule";
+
+                        httpclient.GetSchedule(endpoint, key);
                     }
                     else
                     {
@@ -70,7 +79,7 @@ public class Program()
         }
         else
         {
-            Console.WriteLine("There are no endpoints configured");            
+            Console.WriteLine("There are no endpoints configured");
         }
     }
     private static void PrintEmpointsList(List<Endpoint> endpoints)
@@ -84,10 +93,6 @@ public class Program()
         Console.WriteLine("\n");
 
         Console.WriteLine(@"Please, enter the endpoint ID you want to use or type ""EXIT"" to exit :");
-    }    
-    private static void ConfigureClient(ServiceCollection services)
-    {
-        services.AddHttpClient<IClient, Client>();
     }
     #endregion
 
