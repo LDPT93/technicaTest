@@ -6,60 +6,60 @@ using Microsoft.Extensions.Options;
 
 public class Program()
 {
-    public static async Task Main(string[] args)
+    static async Task Main(string[] args)
     {
         (var apiClient, var apiConfig) = InjectAllServices();
-        if (IsValidURL(apiConfig.BaseUrl))
+
+        var exitSelected = false;
+        while (!exitSelected)
         {
-            var exitSelected = false;
-            while (!exitSelected)
+            Console.WriteLine("List of available endpoints:");
+            Console.WriteLine($"Endpoint one (1): {apiConfig.Endpoint1}");
+            Console.WriteLine($"Endpoint two (2): {apiConfig.Endpoint2}");
+            Console.Write(@"Please, enter the endpoint ID you want to use or type ""EXIT"" to exit :");
+            var input = Console.ReadLine();
+            if (!input.ToLower().Equals("exit"))
             {
-                Console.WriteLine("List of available endpoints:");
-                Console.WriteLine($"Endpoint one (1): {apiConfig.Endpoint1}");
-                Console.WriteLine($"Endpoint two (2): {apiConfig.Endpoint2}");
-                Console.Write(@"Please, enter the endpoint ID you want to use or type ""EXIT"" to exit :");
-                var input = Console.ReadLine();
-                if (!input.ToLower().Equals("exit"))
+                if (int.TryParse(input, out int number))
                 {
-                    if (int.TryParse(input, out int number))
+                    var selectedEndpoint = string.Empty;
+                    switch (number)
                     {
-                        var selectedEndpoint = string.Empty;
-                        switch (number)
-                        {
-                            case 1:
-                                selectedEndpoint = apiConfig.Endpoint1;
-                                break;
-                            case 2:
-                                selectedEndpoint = apiConfig.Endpoint2;
-                                break;
-                            default:
-                                Console.WriteLine("You need select the option 1 or 2");
-                                Console.WriteLine();
-                                break;
-                        }
-                        if (!string.IsNullOrEmpty(selectedEndpoint))
-                        {
-                            var result = await apiClient.GetSchedule(selectedEndpoint);
-                            Console.WriteLine(result);
+                        case 1:
+                            selectedEndpoint = apiConfig.Endpoint1;
+                            break;
+                        case 2:
+                            selectedEndpoint = apiConfig.Endpoint2;
+                            break;
+                        default:
+                            Console.WriteLine("You need select the option 1 or 2");
                             Console.WriteLine();
-                        }
+                            break;
                     }
-                    else
+                    if (!string.IsNullOrEmpty(selectedEndpoint))
                     {
-                        Console.WriteLine("The entry is not a valid number.");
+                        var result = await apiClient.GetSchedule(selectedEndpoint);
+                        Console.WriteLine(result);
                         Console.WriteLine();
                     }
                 }
                 else
-                    exitSelected = true;
+                {
+                    Console.WriteLine("The entry is not a valid number.");
+                    Console.WriteLine();
+                }
             }
+            else
+                exitSelected = true;
+
         }
     }
 
-    public static (IApiClient, APIConfig) InjectAllServices()
+    private static (IApiClient, APIConfig) InjectAllServices()
     {
         var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
         var configuration = builder.Build();
+        //var apiConfig = Configuration.GetSection("APIconfig").Get<APIconfig>();
 
         var services = new ServiceCollection();
         services.AddHttpClient<IApiClient, ApiClient>();
@@ -69,13 +69,5 @@ public class Program()
         var httpclient = serviceProvider.GetService<IApiClient>();
         var apiConfig = serviceProvider.GetService<IOptions<APIConfig>>();
         return (apiClient: httpclient, apiConfig: apiConfig.Value);
-    }
-    public static bool IsValidURL(string url)
-    {
-        if (Uri.TryCreate(url, UriKind.Absolute, out Uri uriResult))
-        {
-            return (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-        }
-        return false;
     }
 }
