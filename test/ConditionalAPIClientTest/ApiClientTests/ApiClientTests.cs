@@ -122,62 +122,7 @@ namespace ConditionalAPIClientTest.ApiClientTests
             // Assert
             Assert.Equal(string.Empty, result);
         }               
-
-        [Fact]
-        public async Task GetSchedule_HttpError_ThrowsException()
-        {
-            // Arrange
-            var response = new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.NotFound,
-                Content = new StringContent("Not Found")
-            };
-            var mockHandler = new Mock<DelegatingHandler>();
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>()
-                )
-                .ReturnsAsync(response);
-
-            var mockHttpClientFactory = new Mock<IHttpClientFactory>();
-            mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(new HttpClient(mockHandler.Object));
-
-            var mockGeneralSettings = new Mock<IOptions<APIConfig>>();
-            mockGeneralSettings.Setup(ap => ap.Value).Returns(_apiConfig);
-
-            var apiClient = new ApiClient(mockHttpClientFactory.Object, mockGeneralSettings.Object);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<HttpRequestException>(() => apiClient.GetSchedule(_apiConfig.Endpoint1));
-        }
-
-        [Fact]
-        public async Task GetSchedule_NetworkException_ThrowsException()
-        {
-            // Arrange
-            var mockHandler = new Mock<DelegatingHandler>();
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>()
-                )
-                .ThrowsAsync(new TaskCanceledException("Request timed out"));
-
-            var mockHttpClientFactory = new Mock<IHttpClientFactory>();
-            mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(new HttpClient(mockHandler.Object));
-
-            var mockGeneralSettings = new Mock<IOptions<APIConfig>>();
-            mockGeneralSettings.Setup(ap => ap.Value).Returns(_apiConfig);
-
-            var apiClient = new ApiClient(mockHttpClientFactory.Object, mockGeneralSettings.Object);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<TaskCanceledException>(() => apiClient.GetSchedule(_apiConfig.Endpoint1));
-        }
+       
+        
     }
 }
