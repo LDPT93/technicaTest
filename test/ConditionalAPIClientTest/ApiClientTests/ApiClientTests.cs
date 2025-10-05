@@ -97,6 +97,20 @@ namespace ConditionalAPIClientTest.ApiClientTests
         }
 
         [Fact]
+        public async Task GetSchedule_InvalidEndpoint_ReturnsEmptyOrError()
+        {
+            // Arrange
+            var apiClient = MockHttpClientEndpoints(string.Empty);
+            var invalidEndpoint = "/invalid_endpoint";
+
+            // Act
+            var result = await apiClient.GetSchedule(invalidEndpoint);
+
+            // Assert
+            Assert.True(result == string.Empty || result == null);
+        }
+
+        [Fact]
         public async Task GetSchedule_EmptyResponse_ReturnsEmptyString()
         {
             // Arrange
@@ -107,7 +121,7 @@ namespace ConditionalAPIClientTest.ApiClientTests
 
             // Assert
             Assert.Equal(string.Empty, result);
-        }
+        }               
 
         [Fact]
         public async Task GetSchedule_HttpError_ThrowsException()
@@ -138,20 +152,6 @@ namespace ConditionalAPIClientTest.ApiClientTests
 
             // Act & Assert
             await Assert.ThrowsAsync<HttpRequestException>(() => apiClient.GetSchedule(_apiConfig.Endpoint1));
-        }
-
-        [Fact]
-        public async Task GetSchedule_InvalidEndpoint_ReturnsEmptyOrError()
-        {
-            // Arrange
-            var apiClient = MockHttpClientEndpoints(string.Empty);
-            var invalidEndpoint = "/v2/invalid_endpoint";
-
-            // Act
-            var result = await apiClient.GetSchedule(invalidEndpoint);
-
-            // Assert
-            Assert.True(result == string.Empty || result == null);
         }
 
         [Fact]

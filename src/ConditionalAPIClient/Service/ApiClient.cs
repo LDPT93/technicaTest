@@ -17,12 +17,11 @@ namespace ConditionalAPIClient.Service
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadAsStringAsync();
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
-
+                Console.WriteLine($"Error de solicitud HTTP: {ex.Message}");
+                return string.Empty;
+            }            
         }
     }
 }

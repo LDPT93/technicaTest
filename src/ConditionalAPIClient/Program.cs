@@ -65,8 +65,15 @@ public class Program()
         services.AddTransient<IApiClient, ApiClient>();
         services.Configure<APIConfig>(configuration.GetSection("APIconfig"));
         var serviceProvider = services.BuildServiceProvider();
+
         var httpclient = serviceProvider.GetService<IApiClient>();
         var apiConfig = serviceProvider.GetService<IOptions<APIConfig>>();
-        return (apiClient: httpclient, apiConfig: apiConfig.Value);
+
+        if (httpclient == null || apiConfig?.Value == null)
+        {
+            throw new InvalidOperationException("Failed to resolve required services.");
+        }
+
+        return (httpclient, apiConfig.Value);
     }
 }
